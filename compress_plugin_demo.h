@@ -115,7 +115,6 @@ int _default_setParallelThreadNumber(hdiff_TCompress* compressPlugin,int threadN
         hpatch_BOOL     isNeedSaveWindowBits;
     };
     typedef struct _zlib_TCompress{
-        hpatch_StreamPos_t curWritePos;
         const hpatch_TStreamOutput* out_code;
         unsigned char*  c_buf;
         size_t          c_buf_size;
@@ -138,7 +137,6 @@ int _default_setParallelThreadNumber(hdiff_TCompress* compressPlugin,int threadN
         self->c_buf=_mem_buf;
         self->c_buf_size=_mem_buf_size;
         self->out_code=out_code;
-        self->curWritePos=0;
         
         self->c_stream.next_out = (Bytef*)_mem_buf;
         self->c_stream.avail_out = (uInt)_mem_buf_size;
@@ -150,7 +148,7 @@ int _default_setParallelThreadNumber(hdiff_TCompress* compressPlugin,int threadN
     static int _zlib_compress_close_by(const hdiff_TCompress* compressPlugin,_zlib_TCompress* self){
         int result=1;//true;
         if (!self) return result;
-        if (self->c_buf!=0){
+        if (self->c_stream.total_in!=0){
             int ret=deflateEnd(&self->c_stream);
             result=(Z_OK==ret);
         }
@@ -591,7 +589,9 @@ int _default_setParallelThreadNumber(hdiff_TCompress* compressPlugin,int threadN
 #endif//_CompressPlugin_lzma
     
 #ifdef  _CompressPlugin_lzma2
+#if (_IsNeedIncludeDefaultCompressHead)
 #   include "MtCoder.h" // // "lzma/C/MtCoder.h"   for MTCODER__THREADS_MAX
+#endif
     struct TCompressPlugin_lzma2{
         hdiff_TCompress base;
         int             compress_level; //0..9
