@@ -31,17 +31,15 @@
 namespace hdiff_private{
 
     hpatch_StreamPos_t getFileSize(const std::string& fileName){
-        hpatch_TPathType   type;
         hpatch_StreamPos_t fileSize;
-        checkv(hpatch_getPathStat(fileName.c_str(),&type,&fileSize));
-        checkv(type==kPathType_file);
+        checkv(hpatch_getFileSize(fileName.c_str(),&fileSize));
         return fileSize;
     }
     
     
     void CChecksum::append(const hpatch_TStreamInput* data,hpatch_StreamPos_t begin,hpatch_StreamPos_t end){
         if (!_handle) return;
-        TAutoMem buf(hpatch_kFileIOBufBetterSize);
+        TAutoMem buf(hdiff_kFileIOBufBestSize);
         while (begin<end){
             size_t len=buf.size();
             if (len>(end-begin))
@@ -82,6 +80,8 @@ namespace hdiff_private{
     
 #if (_IS_NEED_DIR_DIFF_PATCH)
     
+    static const std::string _kBufResName="";
+
     TOffsetStreamOutput::TOffsetStreamOutput(const hpatch_TStreamOutput* base,hpatch_StreamPos_t offset)
     :_base(base),_offset(offset),outSize(0){
         assert(offset<=base->streamSize);
@@ -151,7 +151,7 @@ namespace hdiff_private{
 
     
     CFileResHandleLimit::CFileResHandleLimit(size_t _limitMaxOpenCount,size_t resCount)
-    :limitMaxOpenCount(_limitMaxOpenCount),curInsert(0){
+    :limitMaxOpenCount(_limitMaxOpenCount),curInsert(0),bufRes(0),bufResSize(0){
         hpatch_TResHandleLimit_init(&limit);
         resList.resize(resCount);
         memset(resList.data(),0,sizeof(hpatch_IResHandle)*resCount);
@@ -160,9 +160,21 @@ namespace hdiff_private{
             hpatch_TFileStreamInput_init(&fileList[i]);
     }
     
+    void CFileResHandleLimit::addBufRes(const hpatch_byte* _bufRes,size_t _bufResSize){
+        checkv(bufResSize==0);
+        checkv((_bufRes!=0)&&(_bufResSize>0));
+        bufRes=_bufRes;
+        bufResSize=_bufResSize;
+        _addRes(_kBufResName,_bufResSize);
+    }
     void CFileResHandleLimit::addRes(const std::string& fileName,hpatch_StreamPos_t fileSize){
+        checkv(fileName!=_kBufResName);
+        _addRes(fileName,fileSize);
+    }
+    void CFileResHandleLimit::_addRes(const std::string& fileName,hpatch_StreamPos_t fileSize){
         assert(curInsert<resList.size());
         fileList[curInsert].fileName=fileName;
+        fileList[curInsert].owner=this;
         hpatch_IResHandle* res=&resList[curInsert];
         res->open=CFileResHandleLimit::openRes;
         res->close=CFileResHandleLimit::closeRes;
@@ -185,16 +197,30 @@ namespace hdiff_private{
     hpatch_BOOL CFileResHandleLimit::openRes(struct hpatch_IResHandle* res,hpatch_TStreamInput** out_stream){
         CFile* self=(CFile*)res->resImport;
         assert(self->m_file==0);
-        check(hpatch_TFileStreamInput_open(self,self->fileName.c_str()),"CFileResHandleLimit open file error!");
+        assert(self->owner!=0);
+        if (self->fileName==_kBufResName){
+            self->m_file=(hpatch_FileHandle)(~(size_t)0); //only for check safe
+            mem_as_hStreamInput(&self->base,self->owner->bufRes,
+                                self->owner->bufRes+self->owner->bufResSize);
+        }else{
+            check(hpatch_TFileStreamInput_open(self,self->fileName.c_str()),"CFileResHandleLimit open file error!");
+        }
         *out_stream=&self->base;
         return hpatch_TRUE;
     }
     hpatch_BOOL CFileResHandleLimit::closeRes(struct hpatch_IResHandle* res,const hpatch_TStreamInput* stream){
         CFile* self=(CFile*)res->resImport;
         assert(stream==&self->base);
-        check(hpatch_TFileStreamInput_close(self),"CFileResHandleLimit close file error!");
+        assert(self->owner!=0);
+        if (self->fileName==_kBufResName){
+            assert(self->m_file==(hpatch_FileHandle)(~(size_t)0));
+            self->m_file=0;
+            memset(&self->base,0,sizeof(self->base));
+        }else{
+            check(hpatch_TFileStreamInput_close(self),"CFileResHandleLimit close file error!");
+        }
         return hpatch_TRUE;
     }
-    
+
 #endif
 }

@@ -3,7 +3,6 @@ xcuserdata
 Debug
 Release
 Release_x86
-ReleaseSFX
 *.suo
 *.dcu
 *.~*
@@ -21,3 +20,4 @@ builds/android_ndk_jni_mk/obj
 builds/vc/ipch/
 *.opensdf
 *.sdf
+*.ipch

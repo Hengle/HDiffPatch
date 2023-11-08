@@ -31,6 +31,15 @@
 #include <string.h> //memset
 #include <assert.h>
 #include <stdexcept>//std::runtime_error
+#include "../../../../libParallel/parallel_channel.h"
+#if (_IS_USED_MULTITHREAD)
+# if defined(ANDROID) && (defined(__GNUC__) || defined(__clang__))
+#   define _IS_USED__sync_fetch_and_or 1
+#  else
+#   include <atomic> //need c++11, vc version need vc2012
+#  endif
+#endif
+
 namespace hdiff_private{
 
 class TBitSet{
@@ -39,15 +48,25 @@ public:
     inline ~TBitSet(){ clear(0); }
     
     inline void set(size_t bitIndex){
-        assert(bitIndex<m_bitSize);
+        //assert(bitIndex<m_bitSize);
         m_bits[bitIndex>>kBaseShr] |= ((base_t)1<<(bitIndex&kBaseMask));
     }
+#if (_IS_USED_MULTITHREAD)
+    inline void set_MT(size_t bitIndex){
+        //assert(bitIndex<m_bitSize);
+      #if (_IS_USED__sync_fetch_and_or)
+        __sync_fetch_and_or(&m_bits[bitIndex>>kBaseShr],((base_t)1<<(bitIndex&kBaseMask)));
+      #else
+        ((std::atomic<base_t>*)&m_bits[bitIndex>>kBaseShr])->fetch_or(((base_t)1<<(bitIndex&kBaseMask)));
+      #endif
+    }
+#endif
     inline bool is_hit(size_t bitIndex)const{
         //assert(bitIndex<m_bitSize);
         return 0!=(m_bits[bitIndex>>kBaseShr] & ((base_t)1<<(bitIndex&kBaseMask)));
     }
     
-    inline size_t size()const{return m_bitSize; }
+    inline size_t bitSize()const{return m_bitSize; }
     
     void clear(size_t newBitSize){
         size_t count=bitSizeToCount(newBitSize);
@@ -64,7 +83,7 @@ public:
     }
 private:
     inline static size_t bitSizeToCount(size_t bitSize){ return (bitSize+(kBaseTBits-1))/kBaseTBits; }
-    typedef size_t base_t;
+    typedef uint32_t base_t;
     enum {
         kBaseShr=(sizeof(base_t)==8)?6:((sizeof(base_t)==4)?5:0),
         kBaseTBits=(1<<kBaseShr),
@@ -79,17 +98,27 @@ private:
 template <class T>
 class TBloomFilter{
 public:
+    enum { kZoomMin=3, kZoomBig=32 };
+
     inline TBloomFilter():m_bitSetMask(0){}
-    void init(size_t dataCount){
-        ++dataCount;
-        m_bitSetMask=getMask(dataCount);//mask is 2^N-1
+    inline void clear(){ m_bitSet.clear(0); }
+    void init(size_t dataCount,size_t zoom = kZoomBig){
+        m_bitSetMask=getMask(dataCount,zoom);//mask is 2^N-1
         m_bitSet.clear(m_bitSetMask+1);
     }
+    inline size_t bitSize()const{ return m_bitSet.bitSize(); }
     inline void insert(T data){
         m_bitSet.set(hash0(data));
         m_bitSet.set(hash1(data));
         m_bitSet.set(hash2(data));
     }
+#if (_IS_USED_MULTITHREAD)
+    inline void insert_MT(T data){
+        m_bitSet.set_MT(hash0(data));
+        m_bitSet.set_MT(hash1(data));
+        m_bitSet.set_MT(hash2(data));
+    }
+#endif
     inline bool is_hit(T data)const{
         return m_bitSet.is_hit(hash0(data))
             && m_bitSet.is_hit(hash1(data))
@@ -98,10 +127,11 @@ public:
 private:
     TBitSet   m_bitSet;
     size_t    m_bitSetMask;
-    enum { kZoom=32 };
-    static size_t getMask(size_t dataCount){
-        size_t bitSize=dataCount*kZoom;
-        if ((bitSize/kZoom)!=dataCount)
+    static size_t getMask(size_t dataCount,size_t zoom){
+        if (zoom<kZoomMin)
+            throw std::runtime_error("TBloomFilter::getMask() zoom too small error!");
+        size_t bitSize=dataCount*zoom;
+        if ((bitSize/zoom)!=dataCount)
             throw std::runtime_error("TBloomFilter::getMask() bitSize too large error!");
         unsigned int bit=10;
         while ( (((size_t)1<<bit)<bitSize) && (bit<sizeof(size_t)*8-1) )

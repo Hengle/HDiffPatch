@@ -30,6 +30,10 @@
 #include <assert.h>
 #include <string.h> //memset
 #include <stdexcept> //std::runtime_error
+#include "../../../libParallel/parallel_import.h"
+#if (_IS_USED_MULTITHREAD)
+#include <thread>   //if used vc++, need >= vc2012
+#endif
 //排序方法选择.
 #ifndef _SA_SORTBY
 #define _SA_SORTBY
@@ -54,6 +58,12 @@
 
 namespace hdiff_private{
 
+template<class T>
+static void _clearVector(std::vector<T>& v){
+    std::vector<T> _tmp;
+    v.swap(_tmp);
+}
+
 namespace {
     typedef TSuffixString::TInt   TInt;
     typedef TSuffixString::TInt32 TInt32;
@@ -64,11 +74,11 @@ namespace {
         TInt L0=(TInt)(str0End-str0);
         TInt L1=(TInt)(str1End-str1);
     #ifdef _SA_SORTBY_STD_SORT
-        const int kMaxCmpLength=1024*4; //警告:这是一个特殊的处理手段,用以避免_suffixString_create在使用std::sort时
+        const int kMaxCmpLength_sort=1024*4; //警告:这是一个特殊的处理手段,用以避免_suffixString_create在使用std::sort时
                                         //  某些情况退化到O(n*n)复杂度(运行时间无法接受),设置最大比较长度从而控制算法在
-                                        //  O(kMaxCmpLength*n)复杂度以内,这时排序的结果并不是标准的后缀数组;
-        if (L0>kMaxCmpLength) L0=kMaxCmpLength;
-        if (L1>kMaxCmpLength) L1=kMaxCmpLength;
+                                        //  O(kMaxCmpLength_sort*n)复杂度以内,这时排序的结果并不是标准的后缀数组;
+        if (L0>kMaxCmpLength_sort) L0=kMaxCmpLength_sort;
+        if (L1>kMaxCmpLength_sort) L1=kMaxCmpLength_sort;
     #endif
         TInt LMin;
         if (L0<L1) LMin=L0; else LMin=L1;
@@ -104,8 +114,9 @@ namespace {
     };
 
     template<class TSAInt>
-    static void _suffixString_create(const TChar* src,const TChar* src_end,std::vector<TSAInt>& out_sstring){
-        TSAInt size=(TSAInt)(src_end-src);
+    static void _suffixString_create(const TChar* src,const TChar* src_end,
+                                     std::vector<TSAInt>& out_sstring,size_t threadNum){
+        size_t size=(size_t)(src_end-src);
         if (size<0)
             throw std::runtime_error("suffixString_create() error.");
         out_sstring.resize(size);
@@ -127,9 +138,9 @@ namespace {
     #ifdef _SA_SORTBY_DIVSUFSORT
         saint_t rt=-1;
         if (sizeof(TSAInt)==8)
-            rt=divsufsort64(src,(saidx64_t*)&out_sstring[0],(saidx64_t)size);
+            rt=divsufsort64(src,(saidx64_t*)&out_sstring[0],(saidx64_t)size,(int)threadNum);
         else if (sizeof(TSAInt)==4)
-            rt=divsufsort(src,(saidx_t*)&out_sstring[0],(saidx_t)size);
+            rt=divsufsort(src,(saidx32_t*)&out_sstring[0],(saidx32_t)size,(int)threadNum);
     #endif
        if (rt!=0)
             throw std::runtime_error("suffixString_create() error.");
@@ -165,7 +176,11 @@ namespace {
                     ++vs;
                     ++ss;
                     ++eq_len;
-                    continue;
+                    const int kMaxCmpLength_forLimitRangeDiff=1024*8; 
+                    if (eq_len<kMaxCmpLength_forLimitRangeDiff) //only for optimize limitRange match speed
+                        continue;
+                    else
+                        return mid;
                 }else{
                     is_less=(sub<0);
                     break;
@@ -215,7 +230,7 @@ namespace {
     template<class T>
     static void _build_range(const T* SA_begin,const T* SA_end,
                              const TChar* src_begin,const TChar* src_end,
-                             const T** range){
+                             T* range){
         TChar str[2];
         str[0]=0;
         str[1]=0;
@@ -225,25 +240,23 @@ namespace {
             str[0]=(TChar)(cc>>8);
             str[1]=(TChar)(cc&255);
             pos=_lower_bound(pos,SA_end,str,str+2,src_begin,src_end);
-            range[cc]=pos;
+            range[cc]=(T)(pos-SA_begin);
         }
-        range[256*256]=SA_end;
+        range[256*256]=(T)(SA_end-SA_begin);
     }
 
 }//end namespace
 
 
-TSuffixString::TSuffixString()
-:m_src_begin(0),m_src_end(0),
- m_cached2char_range(0){
+TSuffixString::TSuffixString(bool isUsedFastMatch)
+:m_src_begin(0),m_src_end(0),m_isUsedFastMatch(isUsedFastMatch),m_cached2char_range(0){
      clear_cache();
 }
 
-TSuffixString::TSuffixString(const TChar* src_begin,const TChar* src_end)
-:m_src_begin(0),m_src_end(0),
-m_cached2char_range(0){
+TSuffixString::TSuffixString(const TChar* src_begin,const TChar* src_end,bool isUsedFastMatch,size_t threadNum)
+:m_src_begin(0),m_src_end(0),m_isUsedFastMatch(isUsedFastMatch),m_cached2char_range(0){
     clear_cache();
-    resetSuffixString(src_begin,src_end);
+    resetSuffixString(src_begin,src_end,threadNum);
 }
 
 TSuffixString::~TSuffixString(){
@@ -254,49 +267,65 @@ void TSuffixString::clear(){
     clear_cache();
     m_src_begin=0;
     m_src_end=0;
-    std::vector<TInt32> _tmp_m;
-    m_SA_limit.swap(_tmp_m);
-    std::vector<TInt> _tmp_g;
-    m_SA_large.swap(_tmp_g);
+    _clearVector(m_SA_limit);
+    _clearVector(m_SA_large);
 }
 
-void TSuffixString::resetSuffixString(const TChar* src_begin,const TChar* src_end){
+
+void TSuffixString::resetSuffixString(const TChar* src_begin,const TChar* src_end,size_t threadNum){
     assert(src_begin<=src_end);
     m_src_begin=src_begin;
     m_src_end=src_end;
     if (isUseLargeSA()){
-        m_SA_limit.clear();
-        _suffixString_create(m_src_begin,m_src_end,m_SA_large);
+        _clearVector(m_SA_limit);
+        _suffixString_create(m_src_begin,m_src_end,m_SA_large,threadNum);
     }else{
         assert(sizeof(TInt32)==4);
-        m_SA_large.clear();
-        _suffixString_create(m_src_begin,m_src_end,m_SA_limit);
+        _clearVector(m_SA_large);
+        _suffixString_create(m_src_begin,m_src_end,m_SA_limit,threadNum);
     }
-    build_cache();
+    build_cache(threadNum);
 }
 
 TInt TSuffixString::lower_bound(const TChar* str,const TChar* str_end)const{
     //not use any cached range table
     //return m_lower_bound(m_cached_SA_begin,m_cached_SA_end,
     //                     str,str_end,m_src_begin,m_src_end,m_cached_SA_begin,0);
-    
-    TInt str_len=str_end-str;
-    if ((str_len>=2)&(m_cached2char_range!=0)){
+#if (_SSTRING_FAST_MATCH>0)
+    if (m_isUsedFastMatch&&(!m_fastMatch.isHit(TFastMatchForSString::getHash(str))))
+        return -1;
+    #define kMinStrLen _SSTRING_FAST_MATCH
+#else
+    //assert(str_end-str>=2);
+    #define kMinStrLen 2
+#endif
+    if ((kMinStrLen>=2)&(m_cached2char_range!=0)){
         size_t cc=((size_t)str[1]) | (((size_t)str[0])<<8);
-        return m_lower_bound(m_cached2char_range[cc],m_cached2char_range[cc+1],
+        size_t r0,r1;
+        if (isUseLargeSA()){
+            r0=((TInt*)m_cached2char_range)[cc]*sizeof(TInt);
+            r1=((TInt*)m_cached2char_range)[cc+1]*sizeof(TInt);
+        }else{
+            r0=((TInt32*)m_cached2char_range)[cc]*sizeof(TInt32);
+            r1=((TInt32*)m_cached2char_range)[cc+1]*sizeof(TInt32);
+        }
+        return m_lower_bound((TChar*)m_cached_SA_begin+r0,(TChar*)m_cached_SA_begin+r1,
                              str,str_end,m_src_begin,m_src_end,m_cached_SA_begin,2);
-    }else if (str_len>0) {
+    }else if (kMinStrLen>0){
         size_t c=str[0];
         return m_lower_bound(m_cached1char_range[c],m_cached1char_range[c+1],
                              str,str_end,m_src_begin,m_src_end,m_cached_SA_begin,1);
     }else{
-        return 0;
+        return -1;
     }
 }
 
 void TSuffixString::clear_cache(){
+#if (_SSTRING_FAST_MATCH>0)
+    if (m_isUsedFastMatch) m_fastMatch.clear();
+#endif
     if (m_cached2char_range){
-        delete []m_cached2char_range;
+        delete [](TChar*)m_cached2char_range;
         m_cached2char_range=0;
     }
     memset(&m_cached1char_range[0],0,sizeof(void*)*(256+1));
@@ -305,13 +334,14 @@ void TSuffixString::clear_cache(){
     m_lower_bound=(t_lower_bound_func)_lower_bound_TInt32;//safe
 }
 
-void TSuffixString::build_cache(){
+void TSuffixString::build_cache(size_t threadNum){
     clear_cache();
-    
+#if (_SSTRING_FAST_MATCH>0)
+    if (m_isUsedFastMatch) m_fastMatch.buildMatchCache(m_src_begin,m_src_end,threadNum);
+#endif
     const size_t kUsedCacheMinSASize =2*(1<<20); //当字符串较大时再启用大缓存表.
     if (SASize()>kUsedCacheMinSASize){
-        m_cached2char_range=new void*[256*256+1];
-        memset(m_cached2char_range,0,sizeof(void*)*(256*256+1));
+        m_cached2char_range=new TChar[(256*256+1)*(isUseLargeSA()?sizeof(size_t):sizeof(TInt32))];
     }
     
     if (isUseLargeSA()){
@@ -323,7 +353,7 @@ void TSuffixString::build_cache(){
                         m_src_begin,m_src_end,(const TInt**)&m_cached1char_range[0]);
         if (m_cached2char_range){
             _build_range((TInt*)m_cached_SA_begin,(TInt*)m_cached_SA_end,
-                         m_src_begin,m_src_end,(const TInt**)&m_cached2char_range[0]);
+                         m_src_begin,m_src_end,(TInt*)m_cached2char_range);
         }
     }else{
         m_lower_bound=(t_lower_bound_func)_lower_bound_TInt32;
@@ -334,9 +364,65 @@ void TSuffixString::build_cache(){
                         m_src_begin,m_src_end,(const TInt32**)&m_cached1char_range[0]);
         if (m_cached2char_range){
             _build_range((TInt32*)m_cached_SA_begin,(TInt32*)m_cached_SA_end,
-                         m_src_begin,m_src_end,(const TInt32**)&m_cached2char_range[0]);
+                         m_src_begin,m_src_end,(TInt32*)m_cached2char_range);
         }
     }
 }
+
+
+#if (_SSTRING_FAST_MATCH>0)
+
+    template<bool isMT>
+    static void _filter_insert(TBloomFilter<TFastMatchForSString::THash>* filter,
+                               const TChar* src_begin,const TChar* src_end){
+        const TChar* cur = src_begin;
+        TFastMatchForSString::THash h=TFastMatchForSString::getHash(cur);
+        cur+=TFastMatchForSString::kFMMinStrSize;
+        do {
+    #if (_IS_USED_MULTITHREAD)
+            if (isMT)
+                filter->insert_MT(h);
+            else
+    #endif
+                filter->insert(h);
+            if (cur<src_end)
+                h=TFastMatchForSString::rollHash(h,cur++);
+            else
+                break;
+        } while (true);
+    }
+
+    void TFastMatchForSString::buildMatchCache(const TChar* src_begin,const TChar* src_end,size_t threadNum){
+        #define kFMZoom 4  //ctrl memory size & match speed
+        size_t srcSize=src_end-src_begin;
+        if (srcSize>=kFMMinStrSize){
+            const size_t rollSize=srcSize-(kFMMinStrSize-1);
+            bf.init(rollSize,kFMZoom); //alloc large memory
+#if (_IS_USED_MULTITHREAD)
+            const size_t kInsertMinParallelSize=4096;
+            if ((threadNum>1)&&(rollSize>=kInsertMinParallelSize)) {
+                const size_t maxThreanNum=rollSize/(kInsertMinParallelSize/2);
+                threadNum=(threadNum<=maxThreanNum)?threadNum:maxThreanNum;
+
+                const size_t step=rollSize/threadNum;
+                const size_t threadCount=threadNum-1;
+                std::vector<std::thread> threads(threadCount);
+                for (size_t i=0;i<threadCount;i++,src_begin+=step)
+                    threads[i]=std::thread(_filter_insert<true>,&bf,src_begin,src_begin+step+(kFMMinStrSize-1));
+                _filter_insert<true>(&bf,src_begin,src_end);
+                for (size_t i=0;i<threadCount;i++)
+                    threads[i].join();
+            }else
+#endif
+            {
+                _filter_insert<false>(&bf,src_begin,src_end);
+            }
+        }else if ((srcSize>0)||(src_begin!=0))
+            bf.init(0,kFMZoom);
+        else{
+            bf.clear();
+        }
+    }
+#endif
     
 }//namespace hdiff_private

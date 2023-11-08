@@ -29,6 +29,58 @@
 #ifndef HDiff_diff_types_h
 #define HDiff_diff_types_h
 #include "../HPatch/patch_types.h"
+#include <utility> //std::pair
+#define hdiff_kFileIOBufBestSize (1024*512)
+namespace hdiff_private{
+
+    template<class TCover>
+    struct cover_cmp_by_new_t{
+        inline bool operator ()(const TCover& x,const TCover& y){
+            if (x.newPos!=y.newPos)
+                return x.newPos<y.newPos;
+            else
+                return x.length<y.length;
+        }
+    };
+    template<class TCover>
+    struct cover_cmp_by_old_t{
+        inline bool operator ()(const TCover& x,const TCover& y){
+            if (x.oldPos!=y.oldPos)
+                return x.oldPos<y.oldPos;
+            else
+                return x.length<y.length;
+        }
+    };
+    template<class TCover>
+    inline static bool cover_is_collinear(const TCover& x,const TCover& y){
+        return (x.oldPos+y.newPos==x.newPos+y.oldPos);
+    }
+
+    static const int kCoverMinMatchLen=5;
+
+
+    // TRefCovers: a tools for diff listener,read TCover array;
+    struct TRefCovers{
+        inline TRefCovers(const void* pcovers_,size_t coverCount_,bool isCover32_)
+        :pcovers(pcovers_),coverCount(coverCount_),isCover32(isCover32_){}
+        inline TRefCovers(const hpatch_TCover* pcovers_,size_t coverCount_)
+        :pcovers(pcovers_),coverCount(coverCount_),isCover32(false){}
+        inline hpatch_TCover operator[](size_t index)const{
+            if (isCover32){
+                const hpatch_TCover32& cover=((const hpatch_TCover32*)pcovers)[index];  
+                hpatch_TCover result={cover.oldPos,cover.newPos,cover.length}; 
+                return result; 
+            }else{
+                return ((const hpatch_TCover*)pcovers)[index]; 
+            }
+        }
+        inline size_t size()const{  return coverCount; }
+    private:
+        const void*     pcovers;
+        const size_t    coverCount;
+        const bool      isCover32;
+    };
+}
 
 #ifdef __cplusplus
 extern "C"
@@ -65,6 +117,51 @@ extern "C"
         if (codeLen!=(size_t)codeLen) return 0; //error
         return (size_t)codeLen;
     }
+
+    
+    struct IDiffSearchCoverListener{
+        bool (*limitCover)(struct IDiffSearchCoverListener* listener,
+                           const hpatch_TCover* cover,hpatch_StreamPos_t* out_leaveLen);
+        void (*limitCover_front)(struct IDiffSearchCoverListener* listener,
+                                 const hpatch_TCover* front_cover,hpatch_StreamPos_t* out_leaveLen);
+    };
+    struct IDiffResearchCover{
+        void (*researchCover)(struct IDiffResearchCover* diffi,struct IDiffSearchCoverListener* listener,size_t limitCoverIndex,
+                              hpatch_StreamPos_t sameCover_endPosBack,hpatch_StreamPos_t hitPos,hpatch_StreamPos_t hitLen);
+    };
+    struct IDiffInsertCover{
+        void* (*insertCover)(IDiffInsertCover* diffi,const void* pInsertCovers,size_t insertCoverCount,bool insertIsCover32);
+    };
+
+    static const int kDefaultMaxMatchDeepForLimit=6;
+    typedef struct{
+        hpatch_StreamPos_t beginPos;
+        hpatch_StreamPos_t endPos;
+    } hdiff_TRange;
+
+    struct ICoverLinesListener {
+        bool (*search_cover_limit)(ICoverLinesListener* listener,const void* pcovers,size_t coverCount,bool isCover32);
+        void (*research_cover)(ICoverLinesListener* listener,IDiffResearchCover* diffi,const void* pcovers,size_t coverCount,bool isCover32);
+        void (*insert_cover)(ICoverLinesListener* listener,IDiffInsertCover* diffi,void* pcovers,size_t coverCount,bool isCover32,
+                             hpatch_StreamPos_t* newSize,hpatch_StreamPos_t* oldSize);
+        void (*search_cover_finish)(ICoverLinesListener* listener,void* pcovers,size_t* pcoverCount,bool isCover32,
+                                    hpatch_StreamPos_t* newSize,hpatch_StreamPos_t* oldSize);
+        int (*get_max_match_deep)(const ICoverLinesListener* listener); //if null, default kDefaultMaxMatchDeepForLimit
+        // *search_block* for muti-thread parallel match,can null
+        void (*begin_search_block)(ICoverLinesListener* listener,hpatch_StreamPos_t newSize,
+                                   size_t searchBlockSize,size_t kPartPepeatSize);
+        hpatch_BOOL (*next_search_block_MT)(ICoverLinesListener* listener,hdiff_TRange* out_newRange);//must thread safe
+    };
+
+    struct hdiff_TMTSets_s{ // used by $hdiff -s
+        size_t threadNum;
+        size_t threadNumForSearch; // NOTE: muti-thread search need frequent random disk read
+        bool   newDataIsMTSafe;
+        bool   oldDataIsMTSafe;
+        bool   newAndOldDataIsMTSameRes; //for dir diff
+    };
+
+    static const hdiff_TMTSets_s hdiff_TMTSets_s_kEmpty={1,1,false,false,false};
     
 #ifdef __cplusplus
 }

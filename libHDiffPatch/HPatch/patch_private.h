@@ -82,6 +82,7 @@ hpatch_inline static
 void _TStreamCacheClip_init(TStreamCacheClip* sclip,const hpatch_TStreamInput* srcStream,
                             hpatch_StreamPos_t streamPos,hpatch_StreamPos_t streamPos_end,
                             unsigned char* aCache,hpatch_size_t cacheSize){
+    assert((streamPos<=streamPos_end)&&(streamPos_end<=(srcStream?srcStream->streamSize:0)));
     sclip->streamPos=streamPos;
     sclip->streamPos_end=streamPos_end;
     sclip->srcStream=srcStream;
@@ -90,10 +91,10 @@ void _TStreamCacheClip_init(TStreamCacheClip* sclip,const hpatch_TStreamInput* s
     sclip->cacheEnd=cacheSize;
 }
     
-#define _TStreamCacheClip_isFinish(sclip)     ( 0==_TStreamCacheClip_streamSize(sclip) )
+#define _TStreamCacheClip_isFinish(sclip)     ( 0==_TStreamCacheClip_leaveSize(sclip) )
 #define _TStreamCacheClip_isCacheEmpty(sclip) ( (sclip)->cacheBegin==(sclip)->cacheEnd )
 #define _TStreamCacheClip_cachedSize(sclip)   ( (hpatch_size_t)((sclip)->cacheEnd-(sclip)->cacheBegin) )
-#define _TStreamCacheClip_streamSize(sclip)   \
+#define _TStreamCacheClip_leaveSize(sclip)   \
             (  (hpatch_StreamPos_t)((sclip)->streamPos_end-(sclip)->streamPos)  \
                 + (hpatch_StreamPos_t)_TStreamCacheClip_cachedSize(sclip)  )
 #define _TStreamCacheClip_readPosOfSrcStream(sclip) ( \
@@ -123,15 +124,57 @@ unsigned char* _TStreamCacheClip_readData(TStreamCacheClip* sclip,hpatch_size_t 
 
 hpatch_BOOL _TStreamCacheClip_readDataTo(TStreamCacheClip* sclip,
                                          unsigned char* out_buf,unsigned char* bufEnd);
+hpatch_BOOL _TStreamCacheClip_addDataTo(TStreamCacheClip* self,unsigned char* dst,hpatch_size_t addLen);
 
 hpatch_BOOL _TStreamCacheClip_unpackUIntWithTag(TStreamCacheClip* sclip,
                                                 hpatch_StreamPos_t* result,const hpatch_uint kTagBit);
-hpatch_BOOL _TStreamCacheClip_readUInt(TStreamCacheClip* sclip,hpatch_StreamPos_t* result,hpatch_size_t uintSize);
 
 hpatch_BOOL _TStreamCacheClip_readType_end(TStreamCacheClip* sclip,unsigned char endTag,
                                            char out_type[hpatch_kMaxPluginTypeLength+1]);
 
-        
+// Stream Clip cache
+typedef struct {
+    hpatch_StreamPos_t           writeToPos;
+    const hpatch_TStreamOutput*  dstStream;
+    unsigned char*  cacheBuf;
+    hpatch_size_t   cacheCur;
+    hpatch_size_t   cacheEnd;
+} _TOutStreamCache;
+
+static hpatch_inline void _TOutStreamCache_init(_TOutStreamCache* self,const hpatch_TStreamOutput*  dstStream,
+                                                unsigned char* aCache,hpatch_size_t aCacheSize){
+    self->writeToPos=0;
+    self->cacheCur=0;
+    self->dstStream=dstStream;
+    self->cacheBuf=aCache;
+    self->cacheEnd=aCacheSize;
+}
+hpatch_inline static
+void _TOutStreamCache_resetCache(_TOutStreamCache* self,unsigned char* aCache,hpatch_size_t aCacheSize){
+    assert(0==self->cacheCur);
+    self->cacheBuf=aCache;
+    self->cacheEnd=aCacheSize;
+}
+
+static hpatch_inline hpatch_StreamPos_t _TOutStreamCache_leaveSize(const _TOutStreamCache* self){
+    return self->dstStream->streamSize-self->writeToPos;
+}
+static hpatch_inline hpatch_BOOL _TOutStreamCache_isFinish(const _TOutStreamCache* self){
+    return self->writeToPos==self->dstStream->streamSize;
+}
+static hpatch_inline hpatch_size_t _TOutStreamCache_cachedDataSize(const _TOutStreamCache* self){
+    return self->cacheCur;
+}
+hpatch_BOOL _TOutStreamCache_flush(_TOutStreamCache* self);
+hpatch_BOOL _TOutStreamCache_write(_TOutStreamCache* self,const unsigned char* data,hpatch_size_t dataSize);
+hpatch_BOOL _TOutStreamCache_fill(_TOutStreamCache* self,hpatch_byte fillValue,hpatch_StreamPos_t fillLength);
+
+hpatch_BOOL _TOutStreamCache_copyFromClip(_TOutStreamCache* self,TStreamCacheClip* src,hpatch_StreamPos_t copyLength);
+hpatch_BOOL _TOutStreamCache_copyFromStream(_TOutStreamCache* self,const hpatch_TStreamInput* src,
+                                            hpatch_StreamPos_t srcPos,hpatch_StreamPos_t copyLength);
+hpatch_BOOL _TOutStreamCache_copyFromSelf(_TOutStreamCache* self,hpatch_StreamPos_t aheadLength,hpatch_StreamPos_t copyLength);
+
+
     typedef struct _TDecompressInputStream{
         hpatch_TStreamInput         IInputStream;
         hpatch_TDecompress*         decompressPlugin;
@@ -143,6 +186,22 @@ hpatch_BOOL getStreamClip(TStreamCacheClip* out_clip,_TDecompressInputStream* ou
                           const hpatch_TStreamInput* stream,hpatch_StreamPos_t* pCurStreamPos,
                           hpatch_TDecompress* decompressPlugin,unsigned char* aCache,hpatch_size_t cacheSize);
     
+
+#define _TDiffToSingleStream_kBufSize hpatch_kStreamCacheSize
+typedef struct {
+    hpatch_TStreamInput         base;
+    const hpatch_TStreamInput*  diffStream;
+    hpatch_StreamPos_t          readedSize;
+    hpatch_size_t               cachedBufBegin;
+    hpatch_BOOL                 isInSingleStream;
+    unsigned char               buf[_TDiffToSingleStream_kBufSize];
+} TDiffToSingleStream;
+
+void TDiffToSingleStream_init(TDiffToSingleStream* self,const hpatch_TStreamInput* diffStream);
+hpatch_inline static 
+void TDiffToSingleStream_setInSingleStream(TDiffToSingleStream* self,hpatch_StreamPos_t singleStreamPos){
+    self->isInSingleStream=hpatch_TRUE; }
+
 #ifdef __cplusplus
 }
 #endif

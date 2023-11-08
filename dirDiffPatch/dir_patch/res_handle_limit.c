@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define  check(value) { if (!(value)){ fprintf(stderr,"check "#value" error!\n"); return hpatch_FALSE; } }
+#define  check(value) { if (!(value)){ LOG_ERR("check "#value" error!\n"); return hpatch_FALSE; } }
 
 static hpatch_BOOL _TResHandleLimit_closeOneHandle(hpatch_TResHandleLimit* self){
     size_t              best_i=~(size_t)0;
@@ -86,7 +86,7 @@ static hpatch_BOOL _TResHandleLimit_read(const hpatch_TStreamInput* stream,hpatc
 }
 
 hpatch_BOOL hpatch_TResHandleLimit_open(hpatch_TResHandleLimit* self,size_t limitMaxOpenCount,
-                                 hpatch_IResHandle* resList,size_t resCount){
+                                        hpatch_IResHandle* resList,size_t resCount){
     unsigned char* curMem=0;
     size_t i=0;
     size_t memSize=resCount*(sizeof(const hpatch_TStreamInput*)

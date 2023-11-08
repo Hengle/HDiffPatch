@@ -22,15 +22,16 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
-					<Add option="-Os" />
+					<Add option="-O3" />
 					<Add option="-Wno-error=format-security" />
 					<Add option="-fvisibility=hidden" />
 					<Add option="-ffunction-sections -fdata-sections" />
 					<Add option="-ffat-lto-objects -flto" />
+					<Add option="-DNDEBUG" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
-					<Add option="-Wl,--gc-sections" />
+					<Add option="-Wl,--gc-sections,--as-needed" />
 				</Linker>
 			</Target>
 			<Target title="Release_x86">
@@ -40,17 +41,18 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
-					<Add option="-Os" />
+					<Add option="-O3" />
 					<Add option="-m32" />
 					<Add option="-Wno-error=format-security" />
 					<Add option="-fvisibility=hidden" />
 					<Add option="-ffunction-sections -fdata-sections" />
 					<Add option="-ffat-lto-objects -flto" />
+					<Add option="-DNDEBUG" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add option="-m32" />
-					<Add option="-Wl,--gc-sections" />
+					<Add option="-Wl,--gc-sections,--as-needed" />
 				</Linker>
 			</Target>
 		</Build>
@@ -59,7 +61,15 @@
 			<Add option="-fexceptions" />
 			<Add option="-D_LARGEFILE_SOURCE" />
 			<Add option="-D_FILE_OFFSET_BITS=64" />
+			<Add option="-D_ChecksumPlugin_md5" />
+			<Add option="-DZSTD_HAVE_WEAK_SYMBOLS=0" />
+			<Add option="-DZSTD_TRACE=0" />
+			<Add option="-DZSTD_DISABLE_ASM=1" />
+			<Add option="-DZSTDLIB_VISIBLE=" />
+			<Add option="-DZSTDLIB_HIDDEN=" />
 			<Add directory="../../../lzma/C/" />
+			<Add directory="../../../zstd/lib" />
+			<Add directory="../../../libmd5" />
 		</Compiler>
 		<Unit filename="../../../bzip2/blocksort.c">
 			<Option compilerVar="CC" />
@@ -83,10 +93,47 @@
 		<Unit filename="../../../bzip2/randtable.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../../../libmd5/md5.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../libmd5/md5.h" />
+		<Unit filename="../../../lzma/C/7zCrc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../lzma/C/7zCrcOpt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../lzma/C/Bra.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../lzma/C/Bra86.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../lzma/C/BraIA64.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../lzma/C/CpuArch.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../lzma/C/Delta.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../../../lzma/C/Lzma2Dec.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../lzma/C/LzmaDec.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../lzma/C/Sha256.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../lzma/C/Xz.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../lzma/C/XzCrc64.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../lzma/C/XzDec.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../zlib/adler32.c">
@@ -109,6 +156,55 @@
 		</Unit>
 		<Unit filename="../../../zlib/zlib.h" />
 		<Unit filename="../../../zlib/zutil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../zstd/lib/common/bitstream.h" />
+		<Unit filename="../../../zstd/lib/common/compiler.h" />
+		<Unit filename="../../../zstd/lib/common/cpu.h" />
+		<Unit filename="../../../zstd/lib/common/debug.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../zstd/lib/common/debug.h" />
+		<Unit filename="../../../zstd/lib/common/entropy_common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../zstd/lib/common/error_private.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../zstd/lib/common/error_private.h" />
+		<Unit filename="../../../zstd/lib/common/fse.h" />
+		<Unit filename="../../../zstd/lib/common/fse_decompress.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../zstd/lib/common/huf.h" />
+		<Unit filename="../../../zstd/lib/common/mem.h" />
+		<Unit filename="../../../zstd/lib/common/xxhash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../zstd/lib/common/xxhash.h" />
+		<Unit filename="../../../zstd/lib/common/zstd_common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../zstd/lib/common/zstd_deps.h" />
+		<Unit filename="../../../zstd/lib/common/zstd_internal.h" />
+		<Unit filename="../../../zstd/lib/common/zstd_trace.h" />
+		<Unit filename="../../../zstd/lib/decompress/huf_decompress.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../zstd/lib/decompress/zstd_ddict.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../zstd/lib/decompress/zstd_ddict.h" />
+		<Unit filename="../../../zstd/lib/decompress/zstd_decompress.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../zstd/lib/decompress/zstd_decompress_block.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../zstd/lib/decompress/zstd_decompress_block.h" />
+		<Unit filename="../../../zstd/lib/decompress/zstd_decompress_internal.h" />
+		<Unit filename="../../../zstd/lib/zstd.h" />
+		<Unit filename="../../bsdiff_wrapper/bspatch_wrapper.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../dirDiffPatch/dir_patch/dir_patch.c">
@@ -144,6 +240,9 @@
 		</Unit>
 		<Unit filename="../../libHDiffPatch/HDiff/private_diff/limit_mem_diff/adler_roll.h" />
 		<Unit filename="../../libHDiffPatch/HPatch/patch.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../vcdiff_wrapper/vcpatch_wrapper.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

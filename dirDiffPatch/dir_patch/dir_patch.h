@@ -29,8 +29,16 @@
 #ifndef DirPatch_dir_patch_h
 #define DirPatch_dir_patch_h
 #include "dir_patch_types.h"
-#if (_IS_NEED_DIR_DIFF_PATCH)
 #include "../../libHDiffPatch/HPatch/checksum_plugin.h"
+    typedef struct TDirPatchChecksumSet{
+        hpatch_TChecksum*   checksumPlugin;
+        hpatch_BOOL         isCheck_oldRefData;
+        hpatch_BOOL         isCheck_newRefData;  
+        hpatch_BOOL         isCheck_copyFileData;
+        hpatch_BOOL         isCheck_dirDiffData;
+    } TDirPatchChecksumSet;
+
+#if (_IS_NEED_DIR_DIFF_PATCH)
 #include "ref_stream.h"
 #include "new_stream.h"
 #include "res_handle_limit.h"
@@ -46,6 +54,10 @@ typedef struct TDirDiffInfo{
     hpatch_BOOL                 dirDataIsCompressed;
     //compressType saved in hdiffInfo
     hpatch_compressedDiffInfo   hdiffInfo;
+#if (_IS_NEED_SINGLE_STREAM_DIFF)
+    hpatch_BOOL         isSingleCompressedDiff;
+    hpatch_singleCompressedDiffInfo sdiffInfo;
+#endif
     hpatch_StreamPos_t          externDataOffset;
     hpatch_StreamPos_t          externDataSize;
     hpatch_StreamPos_t          checksumOffset;
@@ -89,14 +101,6 @@ hpatch_BOOL getIsDirDiffFile(const char* diffFileName){
     struct hpatch_TFileStreamInput;
     struct hpatch_TFileStreamOutput;
     
-    typedef struct TDirPatchChecksumSet{
-        hpatch_TChecksum*   checksumPlugin;
-        hpatch_BOOL         isCheck_oldRefData;
-        hpatch_BOOL         isCheck_newRefData;  
-        hpatch_BOOL         isCheck_copyFileData;
-        hpatch_BOOL         isCheck_dirDiffData;
-    } TDirPatchChecksumSet;
-    
 typedef struct TDirPatcher{
     TDirDiffInfo                dirDiffInfo;
     _TDirDiffHead               dirDiffHead;
@@ -125,6 +129,7 @@ typedef struct TDirPatcher{
     const hpatch_TStreamInput*  _dirDiffData;
     void*                       _pDiffDataMem;
     size_t*                     _pOldSameRefCount;
+    hpatch_FileError_t          fileError;
 } TDirPatcher;
 
 hpatch_inline

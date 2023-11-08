@@ -29,6 +29,19 @@
 #ifndef hdiff_dir_diff_h
 #define hdiff_dir_diff_h
 #include "../dir_patch/dir_patch_types.h"
+
+struct THDiffSets{
+    hpatch_BOOL isDiffInMem;//or diff by stream
+    hpatch_BOOL isSingleCompressedDiff;
+    //diff in mem
+    hpatch_BOOL isUseBigCacheMatch;
+    size_t matchScore;
+    size_t patchStepMemSize;
+    size_t matchBlockSize;
+    size_t threadNum;
+    size_t threadNumSearch_s;
+};
+
 #if (_IS_NEED_DIR_DIFF_PATCH)
 #include "dir_manifest.h"
 
@@ -47,15 +60,15 @@ struct IDirDiffListener{
 
 void dir_diff(IDirDiffListener* listener,const TManifest& oldManifest,
               const TManifest& newManifest,const hpatch_TStreamOutput* outDiffStream,
-              bool isLoadAll,size_t matchValue,const hdiff_TCompress* compressPlugin,
-              hpatch_TChecksum* checksumPlugin,size_t kMaxOpenFileNumber);
+              const hdiff_TCompress* compressPlugin,hpatch_TChecksum* checksumPlugin,
+              const THDiffSets& hdiffSets,size_t kMaxOpenFileNumber);
 bool check_dirdiff(IDirDiffListener* listener,const TManifest& oldManifest,const TManifest& newManifest,
                    const hpatch_TStreamInput* testDiffData,hpatch_TDecompress* decompressPlugin,
                    hpatch_TChecksum* checksumPlugin,size_t kMaxOpenFileNumber);
 
 //check oldPath's data is same as that in dir_diff
 hpatch_BOOL check_dirOldDataChecksum(const char* oldPath,hpatch_TStreamInput* diffData,
-                                     hpatch_TDecompress *decompressPlugin,hpatch_TChecksum *checksumPlugin);
+                                     hpatch_TDecompress* decompressPlugin,hpatch_TChecksum* checksumPlugin);
 
 void resave_dirdiff(const hpatch_TStreamInput* in_diff,hpatch_TDecompress* decompressPlugin,
                     const hpatch_TStreamOutput* out_diff,const hdiff_TCompress* compressPlugin,
