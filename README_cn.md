@@ -6,21 +6,21 @@
 [![release](https://img.shields.io/github/downloads/sisong/HDiffPatch/total?color=blue)](https://github.com/sisong/HDiffPatch/releases)
 [![Build Status](https://github.com/sisong/HDiffPatch/workflows/ci/badge.svg?branch=master)](https://github.com/sisong/HDiffPatch/actions?query=workflow%3Aci+branch%3Amaster)
 [![Build status](https://ci.appveyor.com/api/projects/status/t9ow8dft8lt898cv/branch/master?svg=true)](https://ci.appveyor.com/project/sisong/hdiffpatch/branch/master)   
- english | [中文版](README_cn.md)   
+ 中文版 | [english](README.md)   
 
-[HDiffPatch] is a C\C++ library and command-line tools for **diff** & **patch** between binary files or directories(folder); cross-platform; fast running; create small delta/differential; support large files and limit memory requires when diff & patch.   
+[HDiffPatch] 是一个C\C++库和命令行工具，用于在二进制文件或文件夹之间执行 **diff**(创建补丁) 和 **patch**(打补丁)；跨平台、运行速度快、创建的补丁小、支持巨大的文件并且diff和patch时都可以控制内存占用量。   
 
-[HDiffPatch] defines its own patch file format, this lib is also compatible with the [bsdiff4] & [endsley/bsdiff] patch file format and [partially compatible](https://github.com/sisong/HDiffPatch/issues/369#issuecomment-1869798843) with the [open-vcdiff] & [xdelta3] patch file format [VCDIFF(RFC 3284)].   
+[HDiffPatch] 定义了自己的补丁包格式，同时这个库也完全兼容了 [bsdiff4] 和 [endsley/bsdiff] 的补丁包格式，并[部分兼容](https://github.com/sisong/HDiffPatch/issues/369#issuecomment-1869798843)了 [open-vcdiff] 和 [xdelta3] 的补丁包格式 [VCDIFF(RFC 3284)]。   
 
-if need patch (OTA) on embedded systems,MCU,NB-IoT..., see demo [HPatchLite], +[tinyuz] decompressor can run on 1KB RAM devices!   
+如果你需要在嵌入式系统(MCU、NB-IoT)等设备上进行增量更新(OTA), 可以看看例子 [HPatchLite], +[tinyuz] 解压缩器可以在1KB内存的设备上运行!   
 
-update your own Android Apk? Jar or Zip file diff & patch? try [ApkDiffPatch], to create smaller delta/differential! NOTE: *ApkDiffPath can't be used by Android app store, because it requires re-signing apks before diff.*   
+需要更新你自己的安卓apk? 需要对Jar或Zip文件执行 diff 和 patch ? 可以试试 [ApkDiffPatch], 可以创建更小的补丁!  注意: *ApkDiffPath 不能被安卓应用商店作为增量更新所用，因为该算法要求在diff前对apk文件进行重新签名。*   
 
-[sfpatcher] not require re-signing apks (like [archive-patcher]), is designed for Android app store, patch speed up by a factor of xx than archive-patcher & run with O(1) memory.   
+[sfpatcher] 不要求对apk文件进行重新签名 (类似 [archive-patcher])，是为安卓应用商店专门设计优化的算法，patch速度是 archive-patcher 的xx倍，并且只需要O(1)内存。   
 
-if you not have the old versions(too many or not obtain or have been modified), thus cannot create the delta in advance. you can see sync demo [hsynz] (like [zsync]), the new version is only need released once and the owners of the old version get the information about the new version and do the diff&patch themselves. hsynz support zstd compressor & run faster than zsync.
+如果你没有旧版本的数据(或者旧版本非常多或者被修改)，因此不能提前创建好补丁包。那你可以看看使用同步算法来进行增量更新的例子 [hsynz] (类似 [zsync])，新版本只需要发布处理一次，然后旧版本数据的拥有者可以根据获得的新版本的信息自己执行diff和patch。hsynz 支持 zstd 压缩算法并且比 zsync 速度更快。
    
-NOTE: *This library does not deal with file metadata, such as file last wirte time, permissions, link file, etc... To this library, a file is just as a stream of bytes; You can extend this library or use other tools.*   
+注意: *本库不处理文件元数据，如文件最后写入时间、权限、链接文件等。对于这个库，文件就像一个字节流；如果需要您可以扩展此库或使用其他工具。*   
    
 
 [HDiffPatch]: https://github.com/sisong/HDiffPatch
@@ -38,25 +38,25 @@ NOTE: *This library does not deal with file metadata, such as file last wirte ti
 [VCDIFF(RFC 3284)]: https://www.rfc-editor.org/rfc/rfc3284
 
 ---
-## Releases/Binaries
-[Download from latest release](https://github.com/sisong/HDiffPatch/releases) : Command line app for Windows, Linux, MacOS; and .so patch lib for Android.   
-use cmdline to create a delta:   
+## 二进制发布包
+[从 release 下载](https://github.com/sisong/HDiffPatch/releases) : 命令行程序分别运行在 Windows、Linux、MacOS操作系统。 .so库文件用于安卓。   
+用命令行创建一个补丁:   
 `$hdiffz -m-6 -SD -c-zstd-21-24 -d oldPath newPath outDiffFile`   
-if file is very large, try changing `-m-6` to `-s-64`   
-apply the delta:   
+如果文件非常大，可以试试将 `-m-6` 改为 `-s-64`   
+打补丁:   
 `$hpatchz oldPath diffFile outNewPath`   
 
-## Build it yourself
+## 自己编译
 `$ cd <dir>/HDiffPatch`   
 ### Linux or MacOS X ###
-Try:   
+试试:   
 `$ make LDEF=0 LZMA=0 ZSTD=0 MD5=0`   
-bzip2 : if the build fails with `fatal error: bzlib.h: No such file or directory`, use your system's package manager to install the libbz2 package and try again; or download & make with libbz2 source code:
+bzip2 : 如果编译失败，显示 `fatal error: bzlib.h: No such file or directory`，请使用系统的包管理器安装libbz2，然后再试一次；或者下载并使用libbz2源代码来编译:
 ```
 $ git clone https://github.com/sisong/bzip2.git ../bzip2
 $ make LDEF=0 LZMA=0 ZSTD=0 MD5=0 BZIP2=1
 ```
-if need lzma zstd & md5 ... default support, Try:
+如果需要支持 lzma、zstd 和 md5 等 默认编译设置，试试:    
 ```
 $ git clone https://github.com/sisong/libmd5.git ../libmd5
 $ git clone https://github.com/sisong/lzma.git ../lzma
@@ -65,10 +65,10 @@ $ git clone https://github.com/sisong/zlib.git ../zlib
 $ git clone https://github.com/sisong/libdeflate.git ../libdeflate
 $ make
 ```    
-Tip: You can use `$ make -j` to compile in parallel.
+提示:你可以使用 `$ make -j` 来并行编译。
    
 ### Windows ###
-Before you build `builds/vc/HDiffPatch.sln` by [`Visual Studio`](https://visualstudio.microsoft.com), first get the libraries into sibling folders, like so: 
+使用 [`Visual Studio`](https://visualstudio.microsoft.com) 打开 `builds/vc/HDiffPatch.sln` 来编译之前，先将第三方库下载到同级文件夹中，如下所示: 
 ```
 $ git clone https://github.com/sisong/libmd5.git ../libmd5
 $ git clone https://github.com/sisong/lzma.git ../lzma
@@ -79,233 +79,230 @@ $ git clone https://github.com/sisong/bzip2.git  ../bzip2
 ```
    
 ### libhpatchz.so for Android ###   
-* install [Android NDK](https://developer.android.google.cn/ndk/downloads)
+* 安装 [Android NDK](https://developer.android.google.cn/ndk/downloads)
 * `$ cd <dir>/HDiffPatch/builds/android_ndk_jni_mk`
-* `$ build_libs.sh`  (or `$ build_libs.bat` on windows, then got \*.so files)
-* import file `com/github/sisong/HPatch.java` (from `HDiffPatch/builds/android_ndk_jni_mk/java/`) & .so files, java code can call the patch function in libhpatchz.so
+* `$ build_libs.sh`  (或者 Windows下执行 `$ build_libs.bat`, 就可以得到 \*.so 安卓库了)
+* 在你的安卓项目中添加 `com/github/sisong/HPatch.java` (所在路径 `HDiffPatch/builds/android_ndk_jni_mk/java/`) 和 .so 文件， java 代码就可以调用 libhpatchz.so 中的 patch 函数了。
    
 
 ---
    
-## **diff** command line usage:   
-diff     usage: **hdiffz** [options] **oldPath newPath outDiffFile**   
-compress usage: **hdiffz** [-c-...]  **"" newPath outDiffFile**   
-test    usage: **hdiffz**    -t     **oldPath newPath testDiffFile**   
-resave  usage: **hdiffz** [-c-...]  **diffFile outDiffFile**   
-print    info: **hdiffz** -info **diffFile**   
-get  manifest: **hdiffz** [-g#...] [-C-checksumType] **inputPath -M#outManifestTxtFile**   
-manifest diff: **hdiffz** [options] **-M-old#oldManifestFile -M-new#newManifestFile oldPath newPath outDiffFile**   
+## diff 命令行用法和参数说明：
+创建新旧版本间的补丁： **hdiffz** [options] **oldPath newPath outDiffFile**   
+压缩一个文件或文件夹： **hdiffz** [-c-...]  **"" newPath outDiffFile**   
+测试补丁是否正确： **hdiffz**    -t     **oldPath newPath testDiffFile**   
+补丁使用新的压缩插件另存： **hdiffz** [-c-...]  **diffFile outDiffFile**   
+显示补丁的信息: **hdiffz** -info **diffFile**   
+创建该版本的校验清单： **hdiffz** [-g#...] [-C-checksumType] **inputPath -M#outManifestTxtFile**   
+校验输入数据后创建补丁： **hdiffz** [options] **-M-old#oldManifestFile -M-new#newManifestFile oldPath newPath outDiffFile**   
 ```
-  oldPath newPath inputPath can be file or directory(folder),
-  oldPath can empty, and input parameter ""
-options:
+  oldPath、newPath、inputPath 可以是文件或文件夹, 
+  oldPath可以为空, 输入参数为 ""
+选项:
   -m[-matchScore]
-      DEFAULT; all file load into Memory; best diffFileSize;
-      requires (newFileSize+ oldFileSize*5(or *9 when oldFileSize>=2GB))+O(1)
-        bytes of memory;
-      matchScore>=0, DEFAULT -m-6, recommended bin: 0--4 text: 4--9 etc...
+      默认选项; 所有文件都会被加载到内存; 一般生成的补丁文件比较小;
+      需要的内存大小:(新版本文件大小+ 旧版本文件大小*5(或*9 当旧版本文件大小>=2GB时))+O(1);
+      匹配分数matchScore>=0,默认为6,二进制数据时推荐设置为0到4,文件数据时推荐4--9等,跟输入
+      数据的可压缩性相关,一般输入数据的可压缩性越大,这个值就可以越大。
   -s[-matchBlockSize]
-      all file load as Stream; fast;
-      requires O(oldFileSize*16/matchBlockSize+matchBlockSize*5*parallelThreadNumber)bytes of memory;
-      matchBlockSize>=4, DEFAULT -s-64, recommended 16,32,48,1k,64k,1m etc...
+      所有文件当作文件流加载;一般速度比较快;
+      需要的内存大小: O(旧版本文件大小*16/matchBlockSize+matchBlockSize*5*parallelThreadNumber);
+      匹配块大小matchBlockSize>=4, 默认为64, 推荐16,32,48,1k,64k,1m等;
+      一般匹配块越大,内存占用越小,速度越快,但补丁包可能变大。
   -block-fastMatchBlockSize
-      must run with -m;
-      set block match befor slow byte-by-byte match, DEFAULT -block-4k;
-      if set -block-0, means don't use block match;
-      fastMatchBlockSize>=4, recommended 256,1k,64k,1m etc...
-      if newData similar to oldData then diff speed++ & diff memory--,
-      but small possibility outDiffFile's size+
+      必须和-m配合使用;
+      在使用较慢的逐字节匹配之前使用基于块的快速匹配, 默认-block-4k;
+      如果设置为-block-0，意思是关闭基于块的提前匹配；
+      快速块匹配大小fastMatchBlockSize>=4, 推荐256,1k,64k,1m等;
+      如果新版本和旧版本相同数据比较多,那diff速度就会比较快,并且减少内存占用,
+      但有很小的可能补丁包会变大。
   -cache
-      must run with -m;
-      set is use a big cache for slow match, DEFAULT false;
-      if newData not similar to oldData then diff speed++,
-      big cache max used O(oldFileSize) memory, and build slow(diff speed--)
+      必须和-m配合使用;
+      给较慢的匹配开启一个大型缓冲区,来加快匹配速度(不影响补丁大小), 默认不开启;
+      如果新版本和旧版本不相同数据比较多,那diff速度就会比较快;
+      该大型缓冲区最大占用O(旧版本文件大小)的内存, 并且需要较多的时间来创建(从而可能降低diff速度)。
   -SD[-stepSize]
-      create single compressed diffData, only need one decompress buffer
-      when patch, and support step by step patching when step by step downloading!
-      stepSize>=(1024*4), DEFAULT -SD-256k, recommended 64k,2m etc...
+      创建单压缩流的补丁文件, 这样patch时就只需要一个解压缩缓冲区, 并且可以支持边下载边patch;
+      压缩步长stepSize>=(1024*4), 默认为256k, 推荐64k,2m等。
   -BSD
-      create diffFile compatible with bsdiff4, unsupport input directory(folder).
-      also support run with -SD (not used stepSize), then create single compressed
-      diffFile compatible with endsley/bsdiff (https://github.com/mendsley/bsdiff).
+      创建一个和bsdiff4兼容的补丁, 不支持参数为文件夹。
+      也支持和-SD选项一起运行(不使用其stepSize), 从而创建单压缩流的补丁文件，
+      兼容endsley/bsdiff格式 (https://github.com/mendsley/bsdiff)。
   -VCD[-compressLevel[-dictSize]]
-      create diffFile compatible with VCDIFF, unsupport input directory(folder).
-      DEFAULT no compress, out format same as $open-vcdiff ... or $xdelta3 -S -e -n ...
-      if set compressLevel, out format same as $xdelta3 -S lzma -e -n ...
-      compress by 7zXZ(xz), compressLevel in {0..9}, DEFAULT level 7;
-      dictSize can like 4096 or 4k or 4m or 16m etc..., DEFAULT 8m
-      support compress by multi-thread parallel.
-      NOTE: out diffFile used large source window size!
+      创建一个标准规范VCDIFF格式的补丁, 不支持参数为文件夹。
+      默认输出补丁不带压缩, 格式和 $open-vcdiff ... 或 $xdelta3 -S -e -n ... 命令输出的补丁格式兼容；
+      如果设置了压缩级别compressLevel, 那输出格式和 $xdelta3 -S lzma -e -n ...命令输出的补丁格式兼容；
+      压缩输出时补丁文件使用7zXZ(xz)算法压缩, compressLevel可以选择0到9, 默认级别7；
+      压缩字典大小dictSize可以设置为 4096, 4k, 4m, 16m等, 默认为8m
+      支持多线程并行压缩。
+      注意: 输出的补丁的格式中可能使用了巨大的源窗口大小!
   -p-parallelThreadNumber
-      if parallelThreadNumber>1 then open multi-thread Parallel mode;
-      DEFAULT -p-4; requires more memory!
+      设置线程数parallelThreadNumber>1时,开启多线程并行模式;
+      默认为4;需要占用较多的内存。
   -p-search-searchThreadNumber
-      must run with -s[-matchBlockSize];
-      DEFAULT searchThreadNumber same as parallelThreadNumber;
-      but multi-thread search need frequent random disk reads when matchBlockSize
-      is small, so some times multi-thread maybe much slower than single-thread!
-      if (searchThreadNumber<=1) then to close multi-thread search mode.
+      必须和-s[-matchBlockSize]配合使用;
+      默认情况下搜索线程数searchThreadNumber的值和parallelThreadNumber相同;
+      但当matchBlockSize较小时，多线程搜索需要频繁的随机磁盘读取，
+      所以有些时候多线程搜索反而比单线程搜索还慢很多!
+      如果设置searchThreadNumber<=1，可以关闭多线程搜索模式。
   -c-compressType[-compressLevel]
-      set outDiffFile Compress type, DEFAULT uncompress;
-      for resave diffFile,recompress diffFile to outDiffFile by new set;
-      support compress type & level & dict:
-        -c-zlib[-{1..9}[-dictBits]]     DEFAULT level 9
-            dictBits can 9--15, DEFAULT 15.
-            support run by multi-thread parallel, fast!
-        -c-ldef[-{1..12}]               DEFAULT level 12
-            compatible with -c-zlib, faster or better compress than zlib;
-            used libdeflate compressor, & dictBits always 15.
-            support run by multi-thread parallel, fast!
-        -c-bzip2[-{1..9}]               (or -bz2) DEFAULT level 9
-        -c-pbzip2[-{1..9}]              (or -pbz2) DEFAULT level 8
-            support run by multi-thread parallel, fast!
-            NOTE: code not compatible with it compressed by -c-bzip2!
-        -c-lzma[-{0..9}[-dictSize]]     DEFAULT level 7
-            dictSize can like 4096 or 4k or 4m or 128m etc..., DEFAULT 8m
-            support run by 2-thread parallel.
-        -c-lzma2[-{0..9}[-dictSize]]    DEFAULT level 7
-            dictSize can like 4096 or 4k or 4m or 128m etc..., DEFAULT 8m
-            support run by multi-thread parallel, fast!
-            NOTE: code not compatible with it compressed by -c-lzma!
-        -c-zstd[-{0..22}[-dictBits]]    DEFAULT level 20
-            dictBits can 10--30, DEFAULT 23.
-            support run by multi-thread parallel, fast!
+      设置补丁数据使用的压缩算法和压缩级别等, 默认不压缩;
+      补丁另存时,使用新的压缩参数设置来输出新补丁;
+      支持的压缩算法、压缩级别和字典大小等:
+        -c-zlib[-{1..9}[-dictBits]]     默认级别 9
+            压缩字典比特数dictBits可以为9到15, 默认为15。
+            支持多线程并行压缩,很快！
+        -c-ldef[-{1..12}]               默认级别 12
+            输出压缩数据格式兼容于-c-zlib, 但比zlib压缩得更快或压缩得更小;
+            使用了libdeflate压缩算法，且压缩字典比特数dictBits始终为15。
+            支持多线程并行压缩,很快！
+        -c-bzip2[-{1..9}]               (或 -bz2) 默认级别 9
+        -c-pbzip2[-{1..9}]              (或 -pbz2) 默认级别 8
+            支持并行压缩,生成的补丁和-c-bzip2的输出格式稍有不同。
+        -c-lzma[-{0..9}[-dictSize]]     默认级别 7
+            压缩字典大小dictSize可以设置为 4096, 4k, 4m, 128m等, 默认为8m
+            支持2个线程并行压缩。
+        -c-lzma2[-{0..9}[-dictSize]]    默认级别 7
+            压缩字典大小dictSize可以设置为 4096, 4k, 4m, 128m等, 默认为8m
+            支持多线程并行压缩,很快。
+            警告: lzma和lzma2是不同的压缩编码格式。
+        -c-zstd[-{0..22}[-dictBits]]    默认级别 20
+            压缩字典比特数dictBits 可以为10到30, 默认为23。
+            支持多线程并行压缩,较快。
   -C-checksumType
-      set outDiffFile Checksum type for directory diff, DEFAULT -C-fadler64;
-      support checksum type:
-        -C-no                   no checksum
+      为文件夹间diff设置数据校验算法, 默认为fadler64;
+      支持的校验选项:
+        -C-no                   不校验
         -C-crc32
-        -C-fadler64             DEFAULT
+        -C-fadler64             默认
         -C-md5
   -n-maxOpenFileNumber
-      limit Number of open files at same time when stream directory diff;
-      maxOpenFileNumber>=8, DEFAULT -n-48, the best limit value by different
-        operating system.
+      为文件夹间的-s模式diff设置最大允许同时打开的文件数;
+      maxOpenFileNumber>=8, 默认为48; 合适的限制值可能不同系统下不同。
   -g#ignorePath[#ignorePath#...]
-      set iGnore path list when Directory Diff; ignore path list such as:
+      为文件夹间的diff设置忽略路径(路径可能是文件或文件夹); 忽略路径列表的格式如下:
         #.DS_Store#desktop.ini#*thumbs*.db#.git*#.svn/#cache_*/00*11/*.tmp
-      # means separator between names; (if char # in name, need write #: )
-      * means can match any chars in name; (if char * in name, need write *: );
-      / at the end of name means must match directory;
+      # 意味着路径名称之间的间隔; (如果名称中有“#”号, 需要改写为“#:” )
+      * 意味着匹配名称中的任意一段字符; (如果名称中有“*”号, 需要改写为“*:” )
+      / 如果该符号放在名称末尾,意味着必须匹配文件夹;
   -g-old#ignorePath[#ignorePath#...]
-      set iGnore path list in oldPath when Directory Diff;
-      if oldFile can be changed, need add it in old ignore list;
+      为文件夹间的diff设置忽略旧版本的路径;
+      如果旧版本中的某个文件数据可以被运行中的程序改动,那可以将该文件放到该忽略列表中;
   -g-new#ignorePath[#ignorePath#...]
-      set iGnore path list in newPath when Directory Diff;
-      in general, new ignore list should is empty;
+      为文件夹间的diff设置忽略新版本的路径;
+      一般情况下,该列表应该是空的吧?
   -M#outManifestTxtFile
-      create a Manifest file for inputPath; it is a text file, saved infos of
-      all files and directoriy list in inputPath; this file while be used in
-      manifest diff, support re-checksum data by manifest diff;
-      can be used to protect historical versions be modified!
+      创建inputPath的校验清单文件; 该输出文件是一个文本文件, 保存着inputPath中所有
+      文件和文件夹的信息; 该文件被用于manifest diff, 支持diff之前重新校验数据的正确性;
+      可用于确定历史版本的数据没有被篡改!
   -M-old#oldManifestFile
-      oldManifestFile is created from oldPath; if no oldPath not need -M-old;
+      设置oldPath的清单文件oldManifestFile; 如果没有oldPath,那就不需要设置-M-old;
   -M-new#newManifestFile
-      newManifestFile is created from newPath;
-  -D  force run Directory diff between two files; DEFAULT (no -D) run
-      directory diff need oldPath or newPath is directory.
+      设置newPath的清单文件newManifestFile;
+  -D  强制执行文件夹间的diff, 即使输入的是2个文件; 从而为文件间的补丁添加校验功能。
+      默认情况下oldPath或newPath有一个是文件夹时才会执行文件夹间的diff。
   -neq
-      open check: if newPath & oldPath's all datas are equal, then return error;
-      DEFAULT not check equal.
-  -d  Diff only, do't run patch check, DEFAULT run patch check.
-  -t  Test only, run patch check, patch(oldPath,testDiffFile)==newPath ?
-  -f  Force overwrite, ignore write path already exists;
-      DEFAULT (no -f) not overwrite and then return error;
-      if used -f and write path is exist directory, will always return error.
+      打开检查: 如果newPath和oldPath的数据都相同，则返回错误；
+      默认不执行该相等检查。
+  -d  只执行diff, 不要执行patch检查, 默认会执行patch检查.
+  -t  只执行patch检查, 检查是否 patch(oldPath,testDiffFile)==newPath ?
+  -f  强制文件写覆盖, 忽略输出的路径是否已经存在;
+      默认不执行覆盖, 如果输出路径已经存在, 直接返回错误;
+      如果设置了-f,但路径已经存在并且是一个文件夹, 那么会始终返回错误。
   --patch
-      swap to hpatchz mode.
+      切换到 hpatchz 模式; 可以支持hpatchz命令行的相关参数和功能。
   -info
-      print infos of diffFile.
-  -v  print Version info.
-  -h (or -?)
-      print usage info.
+      显示补丁的信息。
+  -v  输出程序版本信息。
+  -h 或 -?
+      输出命令行帮助信息 (该说明)。
 ```
    
-## **patch** command line usage:   
-patch usage: **hpatchz** [options] **oldPath diffFile outNewPath**   
-uncompress usage: **hpatchz** [options] **"" diffFile outNewPath**   
-print  info: **hpatchz** -info **diffFile**   
-create  SFX: **hpatchz** [-X-exe#selfExecuteFile] **diffFile -X#outSelfExtractArchive**   
-run     SFX: **selfExtractArchive** [options] **oldPath -X outNewPath**   
-extract SFX: **selfExtractArchive**  (same as: $selfExtractArchive -f {""|".\"} -X ".\")
+## patch 命令行用法和参数说明：  
+打补丁： **hpatchz** [options] **oldPath diffFile outNewPath**   
+解压缩一个文件或文件夹： **hpatchz** [options] **"" diffFile outNewPath**   
+显示补丁的信息: **hpatchz** -info **diffFile**   
+创建一个自释放包： **hpatchz** [-X-exe#selfExecuteFile] **diffFile -X#outSelfExtractArchive**   
+  (将目标平台的hpatchz可执行文件和补丁包文件合并成一个可执行文件, 称作自释放包SFX)   
+执行一个自释放包： **selfExtractArchive** [options] **oldPath -X outNewPath**   
+  (利用自释放包来打补丁,将包中自带的补丁数据应用到oldPath上, 合成outNewPath)   
+执行一个自解压包： **selfExtractArchive**  (等价于：$selfExtractArchive -f {""|".\"} -X "./")
 ```
-  if oldPath is empty input parameter ""
-options:
+  oldPath可以为空, 输入参数为 ""
+选项:
   -s[-cacheSize]
-      DEFAULT -s-4m; oldPath loaded as Stream;
-      cacheSize can like 262144 or 256k or 512m or 2g etc....
-      requires (cacheSize + 4*decompress buffer size)+O(1) bytes of memory.
-      if diffFile is single compressed diffData(created by hdiffz -SD-stepSize), then requires
-        (cacheSize+ stepSize + 1*decompress buffer size)+O(1) bytes of memory;
-      if diffFile is created by hdiffz -BSD,bsdiff4, hdiffz -VCD, then requires
-        (cacheSize + 3*decompress buffer size)+O(1) bytes of memory;
-      if diffFile is created by xdelta3,open-vcdiff, then requires
-        (sourceWindowSize+targetWindowSize + 3*decompress buffer size)+O(1) bytes of memory.
-  -m  oldPath all loaded into Memory;
-      requires (oldFileSize + 4*decompress buffer size)+O(1) bytes of memory.
-      if diffFile is single compressed diffData(created by hdiffz -SD-stepSize), then requires
-        (oldFileSize+ stepSize + 1*decompress buffer size)+O(1) bytes of memory.
-      if diffFile is created by hdiffz -BSD,bsdiff4, then requires
-        (oldFileSize + 3*decompress buffer size)+O(1) bytes of memory.
-      if diffFile is VCDIFF(created by hdiffz -VCD,xdelta3,open-vcdiff), then requires
-        (sourceWindowSize+targetWindowSize + 3*decompress buffer size)+O(1) bytes of memory.
+      默认选项,并且默认设置为-s-4m; oldPath所有文件被当作文件流来加载;
+      cacheSize可以设置为262144 或 256k, 512m, 2g等
+      需要的内存大小: (cacheSize + 4*解压缩缓冲区)+O(1)
+      而如果diffFile是单压缩流的补丁文件(用hdiffz -SD-stepSize所创建)
+        那需要的内存大小: (cacheSize+ stepSize + 1*解压缩缓冲区)+O(1);
+      如果diffFile是用hdiffz -BSD、bsdiff4、hdiffz -VCD、xdelta3、open-vcdiff所创建
+        那需要的内存大小: (cacheSize + 3*解压缩缓冲区);
+      如果diffFile是VCDIFF格式补丁文件： 如果是用hdiffz -VCD创建，那推荐用-s模式；
+        如果是xdelta、open-vcdiff所创建，那推荐用-m模式。
+  -m  oldPath所有文件数据被加载到内存中;
+      需要的内存大小: (oldFileSize + 4*解压缩缓冲区)+O(1)
+      而如果diffFile是单压缩流的补丁文件(用hdiffz -SD-stepSize所创建)
+        那需要的内存大小: (oldFileSize+ stepSize + 1*解压缩缓冲区)+O(1);
+      如果diffFile是用hdiffz -BSD、bsdiff4所创建
+        那需要的内存大小: (oldFileSize + 3*解压缩缓冲区);
+      如果diffFile是VCDIFF格式补丁文件(用hdiffz -VCD、xdelta3、open-vcdiff所创建)
+        那需要的内存大小: (源窗口大小+目标窗口大小 + 3*解压缩缓冲区);
   -C-checksumSets
-      set Checksum data for directory patch, DEFAULT -C-new-copy;
-      checksumSets support (can choose multiple):
-        -C-diff         checksum diffFile;
-        -C-old          checksum old reference files;
-        -C-new          checksum new files edited from old reference files;
-        -C-copy         checksum new files copy from old same files;
-        -C-no           no checksum;
-        -C-all          same as: -C-diff-old-new-copy;
-  -C-no or -C-new
-      if diffFile is VCDIFF, then to close or open checksum, DEFAULT -C-new.
+      为文件夹patch设置校验方式, 默认设置为 -C-new-copy;
+      校验设置支持(可以多选):
+        -C-diff         校验补丁数据;
+        -C-old          校验引用到的旧版本的文件;
+        -C-new          校验有修改过的新版本的文件;
+        -C-copy         校验从旧版本直接copy到新版本的文件;
+        -C-no           不执行校验;
+        -C-all          等价于: -C-diff-old-new-copy;
+  -C-no 或 -C-new
+      如果diffFile是VCDIFF格式补丁文件, 使用该选项可以关闭或打开校验，默认打开.
   -n-maxOpenFileNumber
-      limit Number of open files at same time when stream directory patch;
-      maxOpenFileNumber>=8, DEFAULT -n-24, the best limit value by different
-        operating system.
-  -f  Force overwrite, ignore write path already exists;
-      DEFAULT (no -f) not overwrite and then return error;
-      support oldPath outNewPath same path!(patch to tempPath and overwrite old)
-      if used -f and outNewPath is exist file:
-        if patch output file, will overwrite;
-        if patch output directory, will always return error;
-      if used -f and outNewPath is exist directory:
-        if patch output file, will always return error;
-        if patch output directory, will overwrite, but not delete
-          needless existing files in directory.
+      为文件夹间的-s模式patch设置最大允许同时打开的文件数;
+      maxOpenFileNumber>=8, 默认为24; 合适的限制值可能不同系统下不同。
+  -f  强制文件写覆盖, 忽略输出的路径是否已经存在;
+      默认不执行覆盖, 如果输出路径已经存在, 直接返回错误;
+      该模式支持oldPath和outNewPath为相同路径!(patch到一个临时路径,完成后再覆盖回old)
+      如果设置了-f,但outNewPath已经存在并且是一个文件:
+        如果patch输出一个文件, 那么会执行写覆盖;
+        如果patch输出一个文件夹, 那么会始终返回错误。
+      如果设置了-f,但outNewPath已经存在并且是一个文件夹:
+        如果patch输出一个文件, 那么会始终返回错误;
+        如果patch输出一个文件夹, 那么会执行写覆盖, 但不会删除文件夹中已经存在的无关文件。
   -info
-      print infos of diffFile.
-  -v  print Version info.
-  -h  (or -?)
-      print usage info.
+      显示补丁的信息。
+  -v  输出程序版本信息。
+  -h 或 -?
+      输出命令行帮助信息 (该说明)。
 ```
    
 ---
-## library API usage:
-**diff**&**patch** function in file: `libHDiffPatch/HDiff/diff.h` & `libHDiffPatch/HPatch/patch.h`   
-**dir_diff()** & **dir patch** in: `dirDiffPatch/dir_diff/dir_diff.h` & `dirDiffPatch/dir_patch/dir_patch.h`   
-### manual:
+## 库 API 使用说明:
+**diff**和**patch** 函数在文件: `libHDiffPatch/HDiff/diff.h` & `libHDiffPatch/HPatch/patch.h`   
+**dir_diff()** 和 **dir patch** 在: `dirDiffPatch/dir_diff/dir_diff.h` & `dirDiffPatch/dir_patch/dir_patch.h`   
+### 使用方式:
 * **create diff**(in newData,in oldData,out diffData);
-   release the diffData for update oldData.  
+   发布 diffData 来升级 oldData。  
 * **patch**(out newData,in oldData,in diffData);
-   ok , get the newData. 
-### v1 API, uncompressed diffData:
+   ok，得到了 newData。 
+### v1 API, 未压缩补丁:
 * **create_diff()**
 * **patch()**
 * **patch_stream()**
 * **patch_stream_with_cache()**
-### v2 API, compressed diffData:
+### v2 API, 压缩的补丁包:
 * **create_compressed_diff()**
 * **create_compressed_diff_stream()**
 * **resave_compressed_diff()**
 * **patch_decompress()**
 * **patch_decompress_with_cache()**
 * **patch_decompress_mem()**
-### v3 API, **diff**&**patch** between directories(folder):
+### v3 API, 在文件夹间 **diff**&**patch**:
 * **dir_diff()**
 * **TDirPatcher_\*()** functions with **struct TDirPatcher**
-### v4 API, single compressed diffData:
+### v4 API, 单压缩流补丁包:
 * **create_single_compressed_diff()**
 * **create_single_compressed_diff_stream()**
 * **resave_single_compressed_diff()**
@@ -313,19 +310,19 @@ options:
 * **patch_single_stream_mem()**
 * **patch_single_compressed_diff()**
 * **patch_single_stream_diff()**
-#### hpatch lite API, optimized hpatch on MCU,NB-IoT... (demo [HPatchLite]): 
+#### hpatch lite API,  为 MCU,NB-IoT... 优化了的 hpatch (例子 [HPatchLite]): 
 * **create_lite_diff()**
 * **hpatch_lite_open()**
 * **hpatch_lite_patch()**
-#### bsdiff ([bsdiff4] & [endsley/bsdiff]) wrapper API:
+#### bsdiff ([bsdiff4] & [endsley/bsdiff]) 兼容包装 API:
 * **create_bsdiff()**
 * **create_bsdiff_stream()** 
 * **bspatch_with_cache()**
-#### vcdiff ([open-vcdiff] & [xdelta3]) wrapper API: 
+#### vcdiff ([open-vcdiff] & [xdelta3]) 兼容包装 API: 
 * **create_vcdiff()**
 * **create_vcdiff_stream()**
 * **vcpatch_with_cache()**
-#### hsynz API, diff&patch by sync (demo [hsynz]): 
+#### hsynz API, 同步 diff&patch (例子 [hsynz]): 
 * **create_sync_data()**
 * **create_dir_sync_data()**
 * **sync_patch()**
@@ -337,7 +334,7 @@ options:
 
 ---
 ## [HDiffPatch] vs [bsdiff4] & [xdelta3]:
-case list([download from OneDrive](https://1drv.ms/u/s!Aj8ygMPeifoQgULlawtabR9lhrQ8)):   
+测试用例([从 OneDrive 下载](https://1drv.ms/u/s!Aj8ygMPeifoQgULlawtabR9lhrQ8)):   
 | |newFile <-- oldFile|newSize|oldSize|
 |----:|:----|----:|----:|
 |1|7-Zip_22.01.win.tar <-- 7-Zip_21.07.win.tar|5908992|5748224|
@@ -362,9 +359,9 @@ case list([download from OneDrive](https://1drv.ms/u/s!Aj8ygMPeifoQgULlawtabR9lh
 |20|WeChat_3.8.0.41.win.tar <-- WeChat_3.8.0.33.win.tar|505876992|505018368|
    
 
-**test PC**: Windows11, CPU R9-7945HX, SSD PCIe4.0x4 4T, DDR5 5200MHz 32Gx2   
-**Program version**: HDiffPatch4.6.3, hsynz 1.1.0, BsDiff4.3, xdelta3.1, zstd1.5.2  
-**test Program**:   
+**测试 PC**: Windows11, CPU R9-7945HX, SSD PCIe4.0x4 4T, DDR5 5200MHz 32Gx2   
+**参与测试的程序和版本**: HDiffPatch4.6.3, hsynz 1.1.0, BsDiff4.3, xdelta3.1, zstd1.5.2  
+**参与测试的程序的参数**:   
 **zstd --patch-from** diff with `--ultra -21 --long=24 -f --patch-from={old} {new} -o {pat}`   
  zstd patch with `-d -f --memory=2047MB --patch-from={old} {pat} -o {new}`  
 **xdelta3** diff with `-S lzma -e -9 -n -f -s {old} {new} {pat}`   
@@ -392,8 +389,8 @@ client sync diff&patch by `hsync_demo {old} {newi} {newz} {out_new} -p-1`
 **hsynz p1 zstd** run hsync_make with `-p-1 -c-zstd-21-24`   
 **hsynz p8 zstd** run hsync_make with `-p-8 -c-zstd-21-24` (run `hsync_demo` with `-p-8`)   
    
-**test result average**:
-|Program|compress|diff mem|speed|patch mem|max mem|speed|
+**测试结果取平均**:
+|程序|包大小|diff内存|速度|patch内存|最大内存|速度|
 |:----|----:|----:|----:|----:|----:|----:|
 |bzip2-9 |33.67%||22.9MB/s|||66MB/s|
 |zlib-9 |36.53%||19.8MB/s|||539MB/s|
@@ -429,8 +426,8 @@ client sync diff&patch by `hsync_demo {old} {newi} {newz} {out_new} -p-1`
 |hsynz p8 zstd|14.95%|3349M|10.1MB/s|24M|34M|410MB/s|
     
 
-## input Apk Files for test: 
-case list:
+## 使用 Apk 文件来测试: 
+测试用例:
 | |app|newFile <-- oldFile|newSize|oldSize|
 |----:|:---:|:----|----:|----:|
 |1|<img src="https://github.com/sisong/sfpatcher/raw/master/img/cn.wps.moffice_eng.png" width="36">|cn.wps.moffice_eng_13.30.0.apk <-- 13.29.0|95904918|94914262|
@@ -467,23 +464,23 @@ case list:
 |32|<img src="https://github.com/sisong/sfpatcher/raw/master/img/tv.danmaku.bili.png" width="36">|tv.danmaku.bili_7.1.0.apk <-- 7.0.0|104774723|104727005|
    
 
-**changed test Program**:   
+**对测试程序的参数进行一些调整**:   
 **hdiffz ...** `-m-6 -SD` changed to `-m-1 -SD-2m -cache`, `-s-64 -SD` changed to `-s-16 -SD-2m`   
 **hdiffz ...** lzma2 dict size `16m` changed to `8m`, zstd dict bit `24` changed to `23`   
 **hsynz ...** make `-s-2k` changed to `-s-1k`   
 & adding **hsynz p1**, **hsynz p8** make without compressor   
 **archive-patcher** v1.0, diff with `--generate --old {old} --new {new} --patch {pat}`,   
   patch with `--apply --old {old} --patch {pat} --new {new}`   
-  NOTE: archive-patcher's delta file compressed by lzma2-9-16m, diff&patch time not include compress&decompress delta file's memory&time.   
+  注意: archive-patcher 统计的补丁包大小是经过了 lzma2-9-16m 压缩后的, 而 diff&patch 统计时并不包含压缩和解压缩补丁所需的内存和时间。   
 **sfpatcher -1 zstd** v1.1.1 diff with `-o-1 -c-zstd-21-23 -m-1 -step-3m -lp-512k -p-8 -cache -d {old} {new} {pat}`   
 & **sfpatcher -2 lzma2** diff with `-o-2 -c-lzma2-9-4m -m-1 -step-2m -lp-8m -p-8 -cache -d {old} {new} {pat}`   
- sfpatcher patch with `-lp -p-8 {old} {pat} {new}`   
 **sfpatcher -1 clA zstd** v1.3.0 used `$sf_normalize -cl-A` normalized apks before diff   
-adding test hpatchz&sfpatcher on Android, arm CPU Kirin980(2×A76 2.6G + 2×A76 1.92G + 4×A55 1.8G)   
-( [archive-patcher], [sfpatcher] optimized diff&patch between apk files )  
+ sfpatcher patch with `-lp -p-8 {old} {pat} {new}`   
+adding test hpatchz&sfpatcher on Android, arm CPU 麒麟980(2×A76 2.6G + 2×A76 1.92G + 4×A55 1.8G)   
+( [archive-patcher]、[sfpatcher] diff&patch 时针对apk文件格式进行了优化 )  
 
-**test result average**:
-|Program|compress|diff mem|speed|patch mem|max mem|speed|arm Kirin980|
+**测试结果取平均**:
+|程序|包大小|diff内存|速度|patch内存|最大内存|速度|arm 麒麟980|
 |:----|----:|----:|----:|----:|----:|----:|----:|
 |zstd --patch-from|53.18%|2199M|3.6MB/s|209M|596M|609MB/s|
 |xdelta3|54.51%|422M|3.8MB/s|98M|99M|170MB/s|
@@ -523,6 +520,6 @@ adding test hpatchz&sfpatcher on Android, arm CPU Kirin980(2×A76 2.6G + 2×A76 
     
 
 ---
-## Contact
+## 联系
 housisong@hotmail.com  
 

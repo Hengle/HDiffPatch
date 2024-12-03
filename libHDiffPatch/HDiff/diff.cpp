@@ -1400,7 +1400,8 @@ void resave_compressed_diff(const hpatch_TStreamInput*  in_diff,
 }
 
 
-void resave_single_compressed_diff(const hpatch_TStreamInput*  in_diff,
+hpatch_StreamPos_t
+     resave_single_compressed_diff(const hpatch_TStreamInput*  in_diff,
                                    hpatch_TDecompress*         decompressPlugin,
                                    const hpatch_TStreamOutput* out_diff,
                                    const hdiff_TCompress*      compressPlugin,
@@ -1439,6 +1440,7 @@ void resave_single_compressed_diff(const hpatch_TStreamInput*  in_diff,
         TPlaceholder compressedSize_pos=outDiff.packUInt_pos(compressPlugin?diffInfo->uncompressedSize:0);
         outDiff.pushStream(&clip,compressPlugin,compressedSize_pos);
     }
+    return outDiff.getWritedPos();
 }
 
 
@@ -1684,3 +1686,24 @@ bool check_lite_diff(const hpi_byte* newData,const hpi_byte* newData_end,
         return false;
     return listener.newData_cur==listener.newData_end;
 }
+
+
+hpatch_BOOL hdiff_streamDataIsEqual(const hpatch_TStreamInput* x,const hpatch_TStreamInput* y){
+    const hpatch_StreamPos_t ssize=x->streamSize;
+    if (ssize!=y->streamSize) return hpatch_FALSE;
+    const size_t kACacheBufSize=hdiff_kFileIOBufBestSize;
+    hdiff_private::TAutoMem _cache(kACacheBufSize*2);
+    hpatch_byte* bufx=_cache.data();
+    hpatch_byte* bufy=bufx+kACacheBufSize;
+    for (hpatch_StreamPos_t i=0; i<ssize; ){
+        const hpatch_StreamPos_t maxdSize=ssize-i;
+        size_t dataSize=(size_t)(kACacheBufSize<=maxdSize?kACacheBufSize:maxdSize);
+        check(x->read(x,i,bufx,bufx+dataSize));
+        check(y->read(y,i,bufy,bufy+dataSize));
+        if (0!=memcmp(bufx,bufy,dataSize))
+            return hpatch_FALSE;
+        i+=dataSize;
+    }
+    return hpatch_TRUE;
+}
+

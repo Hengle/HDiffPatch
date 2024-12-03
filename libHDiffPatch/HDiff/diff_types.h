@@ -103,6 +103,7 @@ extern "C"
         hpatch_StreamPos_t          (*compress)(const struct hdiff_TCompress* compressPlugin,
                                                 const hpatch_TStreamOutput*   out_code,
                                                 const hpatch_TStreamInput*    in_data);
+        const char*        (*compressTypeForDisplay)(void);//like compressType but just for display,can NULL
     } hdiff_TCompress;
     
     static hpatch_inline
@@ -147,7 +148,7 @@ extern "C"
         void (*search_cover_finish)(ICoverLinesListener* listener,void* pcovers,size_t* pcoverCount,bool isCover32,
                                     hpatch_StreamPos_t* newSize,hpatch_StreamPos_t* oldSize);
         int (*get_max_match_deep)(const ICoverLinesListener* listener); //if null, default kDefaultMaxMatchDeepForLimit
-        // *search_block* for muti-thread parallel match,can null
+        // *search_block* for multi-thread parallel match,can null
         void (*begin_search_block)(ICoverLinesListener* listener,hpatch_StreamPos_t newSize,
                                    size_t searchBlockSize,size_t kPartPepeatSize);
         hpatch_BOOL (*next_search_block_MT)(ICoverLinesListener* listener,hdiff_TRange* out_newRange);//must thread safe
@@ -155,7 +156,7 @@ extern "C"
 
     struct hdiff_TMTSets_s{ // used by $hdiff -s
         size_t threadNum;
-        size_t threadNumForSearch; // NOTE: muti-thread search need frequent random disk read
+        size_t threadNumForSearch; // NOTE: multi-thread search need frequent random disk read
         bool   newDataIsMTSafe;
         bool   oldDataIsMTSafe;
         bool   newAndOldDataIsMTSameRes; //for dir diff
@@ -163,6 +164,9 @@ extern "C"
 
     static const hdiff_TMTSets_s hdiff_TMTSets_s_kEmpty={1,1,false,false,false};
     
+    //return whether x&y's datas are equal; if read stream fail,thorw std::runtime_error
+    hpatch_BOOL hdiff_streamDataIsEqual(const hpatch_TStreamInput* x,const hpatch_TStreamInput* y);
+
 #ifdef __cplusplus
 }
 #endif

@@ -2,6 +2,27 @@
 
 full changelog at: https://github.com/sisong/HDiffPatch/commits   
 
+## [v4.8.0](https://github.com/sisong/HDiffPatch/tree/v4.8.0) - 2024-07-26
+### Added
+* cmdline hdiffz support option "-c-ldef-{1..12}"; used libdeflate compressor, compatible with -c-zlib, faster or better than zlib;
+ (hpatchz now default closed libdeflate decompressor)
+* add plugin ldefCompressPlugin, pldefCompressPlugin, ldefDecompressPlugin;
+### Changed
+* released Android libhpatchz.so support Android 15 with 16KB page size;
+
+## [v4.7.0](https://github.com/sisong/HDiffPatch/tree/v4.7.0) - 2024-07-12
+### Added
+* cmdline hdiffz support option "-BSD -SD", to create diffFile compatible with another BSDIFF format "ENDSLEY/BSDIFF43", https://github.com/mendsley/bsdiff ; patch support this format from v4.6.7
+* cmdline hdiffz support option "-neq"; if opened, hdiffz will refuse to created diffFile when oldData==newData.
+### Fixed
+* fixed SFX auto extract logic (SFX executable file is hpatchz file + diffFile)   
+SFX extract with default option `$selfExtractArchive -f ".\" -X ".\"` when diffFile created by directories;   
+if diffFile created by empty oldPath, then extract with default option `$selfExtractArchive -f "" -X ".\"`.   
+
+## [v4.6.9](https://github.com/sisong/HDiffPatch/tree/v4.6.9) - 2023-12-01
+### Added
+* cmdline hdiffz & hpatchz support option "-info diffFile", print infos of diffFile;
+
 ## [v4.6.8](https://github.com/sisong/HDiffPatch/tree/v4.6.8) - 2023-11-02
 ### Changed
 * hdiffz.exe&hpatchz.exe support long path on Windows OS;
@@ -25,7 +46,7 @@ full changelog at: https://github.com/sisong/HDiffPatch/commits
 
 ## [v4.5.2](https://github.com/sisong/HDiffPatch/tree/v4.5.2) - 2022-12-25
 ### Fixed
-* fix a bug when run dir_diff by muti-thread parallel;
+* fix a bug when run dir_diff by multi-thread parallel;
 
 ## [v4.5.0](https://github.com/sisong/HDiffPatch/tree/v4.5.0) - 2022-11-23
 ### Added
@@ -37,11 +58,11 @@ full changelog at: https://github.com/sisong/HDiffPatch/commits
 
 ## [v4.4.0](https://github.com/sisong/HDiffPatch/tree/v4.4.0) - 2022-10-09
 ### Changed
-* optimize diff -m & -s speed by muti-thread parallel, requires C++11.
+* optimize diff -m & -s speed by multi-thread parallel, requires C++11.
 
 ## [v4.3.0](https://github.com/sisong/HDiffPatch/tree/v4.3.0) - 2022-09-23
 ### Changed
-* recode some patch error code: decompresser errors, file error, disk space full error, jni error
+* recode some patch error code: decompressor errors, file error, disk space full error, jni error
 
 ## [v4.2.0](https://github.com/sisong/HDiffPatch/tree/v4.2.0) - 2022-05-15
 ### Added
